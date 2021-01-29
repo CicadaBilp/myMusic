@@ -26,7 +26,7 @@
 
 import { Swiper, SwiperSlide } from 'vue-awesome-swiper'
 // import style (<= Swiper 5.x)
-import 'swiper/css/swiper.css'
+import 'swiper/css/swiper.css';
 import PlayListItem from "./PlayListItem";
 export default {
   components: {
@@ -42,7 +42,7 @@ export default {
   },
   computed: {
     swiper() {
-      return this.$refs.mySwiper.swiper;
+      return this.$refs.mySwiper.$swiper
     }
 	},
   data() {
@@ -62,11 +62,6 @@ export default {
           speed:800,
           //滑动方向
           direction : 'horizontal',
-          //左右点击
-          navigation: {
-              nextEl: '.swiper-button-next',
-              prevEl: '.swiper-button-prev',
-          },
           //分页器设置         
           pagination: {
               el: '.swiper-pagination',
@@ -76,10 +71,14 @@ export default {
     }
   },
   methods: {
-    created(){
-      console.log('创建之前');
+    listPre(){
+      this.swiper.slidePrev()
+    },
+    listNext(){
+      this.swiper.slideNext()
     }
-  },
+    
+  }
 }
 </script>
 

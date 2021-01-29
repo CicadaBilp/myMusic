@@ -69,7 +69,7 @@ export default {
   margin: 0 auto;
   position: relative;
   // background-color: aquamarine;
-  border-bottom: 1px solid red;
+  border-bottom: 1px solid #f2f2f2;
   h1 {
     position: absolute;
     top: 22px;

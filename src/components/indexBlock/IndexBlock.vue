@@ -8,9 +8,11 @@
         <span
           v-for="(name, index) in navlist"
           class="nav-bar-list-item"
+          :class="{'nav-active' : index==navindex}"
           :key="index"
-          >{{ name }}</span
-        >
+          @click="changeList(name,index)"
+        > {{ name }}
+        </span>
         <div class="btn-left" v-if="btnleft">{{ btnleft }}</div>
       </div>
       <div class="btn-right" :style="{top:btntop + 'px'}" v-if="btntop">更多</div>
@@ -23,6 +25,11 @@
 
 <script>
 export default {
+  data(){
+    return {
+      navindex:0
+    }
+  },
   props: {
     title: String, //标题
     navlist: Array, //二级标题数组
@@ -30,10 +37,18 @@ export default {
     btntop: Number, //右边按钮(更多)的定位top值
   },
   methods:{
+    //点击上一页
     pre(){
+      this.$children[0].listPre()
     },
+    //点击下一页
     next(){
-
+       this.$children[0].listNext()
+    },
+    //点击二级标题切换列表
+    changeList(name,index){
+      this.navindex = index
+      this.$emit('change',name)
     }
   }
 };
@@ -63,7 +78,7 @@ export default {
     margin: 0 auto;
     height: 100%;
     position: relative;
-    border: 1px solid green;
+    // border: 1px solid green;
     // overflow: hidden;
 
     .title {
@@ -86,6 +101,9 @@ export default {
         &:hover {
           color: #31c27c;
           cursor: pointer;
+        }
+        &.nav-active{
+          color: #31c27c;
         }
       }
     }

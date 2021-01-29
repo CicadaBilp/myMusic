@@ -1,7 +1,7 @@
 <template>
   <div class="list-item-wrapper"  :style="itemWrapper">
     <div class="list-item" :class="className">
-      <div class="item-img" :style="itemImg">
+      <div class="item-img" :style="itemImg" >
         <img :src="imgsrc" alt="" />
         <i class="mask"></i>
         <i class="play-icon"></i>
@@ -44,20 +44,21 @@ export default {
     className(){
       const obj = this.config
       if(obj.type == 'newSong'){
-        return 'new-song'
+        return 'horizontal'
       }else{
-        return 'hot-music'
+        return 'vertical'
       }
     },
     //图片的地址
     imgsrc(){
       const obj = this.config
+      if(obj.type == 'hotMusic') return this.items.coverImgUrl  //推荐歌单部分图片
       if(obj.type == 'newSong') return this.items.album.picUrl  //新歌推荐部分图片
-      if(obj.type == 'hotMusic' || obj.type == 'newDisc') return this.items.picUrl  //推荐歌单部分图片
+      if(obj.type == 'newDisc') return this.items.picUrl  //新碟部分图片
       if(obj.type == 'wonderHot') return this.items.imageUrl  //精彩推荐图片部分
       if(obj.type == 'mv') return this.items.cover  //mv
 
-      return 
+      return ''
     },
     //标题信息
     title(){
@@ -135,7 +136,7 @@ export default {
         text-overflow: ellipsis
       }
     }
-    &.hot-music{
+    &.vertical{
       @include columnCenter;
       .item-img {
         margin:15px 0;
@@ -158,7 +159,7 @@ export default {
         }
       }
     }
-    &.new-song{
+    &.horizontal{
       display: flex;
       .item-img {
         margin:0 15px 15px 0;
