@@ -18,6 +18,7 @@ import NewDisc from 'components/indexBlock/NewDisc.vue'
 import Charts from 'components/indexBlock/Charts.vue'
 import MvList from 'components/indexBlock/MvList.vue'
 export default {
+  name:'index',
   components:{
     HotMusic,
     NewMusic,

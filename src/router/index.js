@@ -58,6 +58,10 @@ const routes = [
       {
         path:'/home/mymusic',
         component:() => import('../views/mymusic/MyMusic.vue')
+      },
+      {
+        path:'/home/searchlist',
+        component:() => import('../views/searchlist/SearchList.vue')
       }
     ]
   },

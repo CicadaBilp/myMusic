@@ -10,7 +10,8 @@
 import IndexBlock from './IndexBlock.vue'
 import PlayListSwiper from '../common/PlayListSwiper'
 import {API} from '@/request/api.js'
-import {arrChange,newSongType} from '@/utils'
+import {arrChange} from '@/utils/utils.js'
+import {newSongType} from '@/utils'
 export default {
   components: { IndexBlock ,PlayListSwiper},
   data(){

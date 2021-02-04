@@ -15,7 +15,7 @@
 import IndexBlock from './IndexBlock.vue'
 import PlayListSwiper from '../common/PlayListSwiper'
 import {API} from '@/request/api.js'
-import {arrChange} from '@/utils'
+import {arrChange} from '@/utils/utils.js'
 
 export default {
   components: { IndexBlock ,PlayListSwiper},

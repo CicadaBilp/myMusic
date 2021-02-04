@@ -5,7 +5,9 @@
         <li v-for="(item,index) in musichall_list" :key="index">{{item.name}}</li>
       </ul>
     </div>
-      <router-view />
+      <keep-alive include="index">
+        <router-view />
+      </keep-alive>
   </div>
 </template>
 
