@@ -1,5 +1,5 @@
 <template>
-  <div class="btn-wrapper" :style="wrapperStyle">
+  <div class="btn-wrapper" :style="wrapperStyle" @click="handleClick">
     <i class="btn-icon" :style="iconStyle"></i>
     <span class="btn-name">{{btnname}}</span>
   </div>
@@ -16,6 +16,7 @@ export default {
     color:String,
   },
   computed:{
+    //按钮样式
     wrapperStyle(){
       return {
         backgroundColor:this.bgcolor,
@@ -23,10 +24,16 @@ export default {
         borderColor:this.bordercolor
       }
     },
+    //按钮中图标的背景图定位
     iconStyle(){
       return {
         backgroundPosition:this.xposition+'px' + ' ' + this.yposition+'px'
       }
+    }
+  },
+  methods:{
+    handleClick(){
+      this.$emit('clickbtn',this.btnname)
     }
   }
 }
@@ -38,7 +45,7 @@ export default {
 .btn-wrapper{
   height: 38px;
   box-sizing: border-box;
-  border: 1px solid rgba(255,255,255,.2);
+  border: 1px solid #ccc;
   padding: 0 23px;
   margin-right: 20px;
   display: flex;

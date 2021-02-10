@@ -18,6 +18,7 @@ function getRandom(min,max){
   return Math.floor(Math.random() * (max-min+1) + min)
 }
 
+//打乱数组
 export function shuffle(arr){
   for(let i = 0; i < arr.length; i++){
     let j = getRandom(0,i)
@@ -25,52 +26,34 @@ export function shuffle(arr){
     arr[i] = arr[j]
     arr[j] = t
   }
-
   return arr
 }
 
-class Lyric {
-  constructor(data){
-    this.data = data
-    this.lrc = data['lrc']['lyric']
-    this.tlyric = data['tlyric']['lyric']
-
-    this.lrcMap = this.getLyricMap(this.lrc)
-    
-
-    this.tlyricMap = this.getLyricMap(this.tlyric)
 
 
+//处理播放数量
+export function tranNumber(count,point){
+  let numStr = count.toString().split('.')[0]
+  
+  if(numStr.length < 5){
+    return numStr
+  }else if(numStr.length >= 5 && numStr.length <= 8){
+    let decimal = numStr.substring(numStr.length -4, numStr.length - 4 + point )
+    return parseFloat(parseInt(count / 10000) + '.' + decimal) + '万'
+  }else if(numStr.length > 8){
+    let decimal = numStr.substring(numStr.length - 8, numStr.length - 8 + point)
+    return parseFloat(parseInt(count / 100000000) + '.' + decimal) + '亿'
   }
-
-  getLyricMap(lrc){
-    let key,value,sIdx,eIdx,nsIdx;
-    let ret = {}
-
-    if(!lrc || (typeof lrc !== 'string')) return ret
-
-    while(lrc){
-      sIdx = lrc.indexOf('[')
-      eIdx = lrc.indexOf(']') + 1
-      if(sIdx !== -1 && eIdx !== -1){
-        key = lrc.slice(sIdx,eIdx)
-        advance(eIdx)
-        nsIdx = lrc.indexOf('[')
-        value = lrc.slice(0,nsIdx)
-        ret[key] = value.trim()
-      }else{
-        break
-      }
-    }
-    function advance(n){
-      lrc = lrc.substring(n)
-    }
-    return ret
-  }
-
-
-
-
-
-
 }
+
+//查找歌曲在列表中的索引
+export function findIndex(list,song){
+  return list.findIndex((item) => {
+    return item.id === song.id
+  })
+}
+
+
+
+
+

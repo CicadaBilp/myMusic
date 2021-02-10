@@ -2,7 +2,11 @@
   <div>
     <div class="musichall-nav-bar">
       <ul>
-        <li v-for="(item,index) in musichall_list" :key="index">{{item.name}}</li>
+        <li v-for="(item,index) in musichall_list" 
+            :key="index"
+            :class="{'active':index===curindex}"
+            @click="handleselect(index)"
+        >{{item.name}}</li>
       </ul>
     </div>
       <keep-alive include="index">
@@ -26,7 +30,13 @@ export default {
         { name:'MV', path:'/home/musichall/mv' },
         { name:'数字专辑', path:'/home/musichall/album' },
         { name:'票务', path:'/home/musichall/ticketing' },
-      ]
+      ],
+      curindex:0
+    }
+  },
+  methods:{
+    handleselect(index){
+      this.curindex = index
     }
   }
 }
@@ -55,6 +65,9 @@ export default {
       &:hover{
         color: #31c27c;
         cursor: pointer;
+      }
+      &.active{
+        color: #31c27c;
       }
     }
   }

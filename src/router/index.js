@@ -16,6 +16,7 @@ const routes = [
       {
         path:'/home/musichall',
         component:() => import('../views/musichall/MusicHall.vue'),
+        redirect: '/home/musichall/index',
         children:[
           {
             path:'/home/musichall/index',
@@ -62,6 +63,14 @@ const routes = [
       {
         path:'/home/searchlist',
         component:() => import('../views/searchlist/SearchList.vue')
+      },
+      {
+        path:'/home/playlistdetail',
+        component:() => import('../views/playlistdetail/PlayListDetail.vue')
+      },
+      {
+        path:'/home/albumdetail',
+        component:() => import('../views/albumdetail/AlbumDetail.vue')
       }
     ]
   },

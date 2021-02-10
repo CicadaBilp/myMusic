@@ -1,4 +1,5 @@
 <template>
+<div>
   <swiper :options="swiperOption" ref="mySwiper">
     <!-- slides -->
     <swiper-slide v-for="(itemone, slideindex) in listinfo" :key="slideindex">
@@ -8,12 +9,14 @@
           :items="item"
           :key="index"
           :config="iteminfo"
+          v-on="$listeners"
         ></play-list-item>
       </ul>
     </swiper-slide>
     <!-- Optional controls -->
     <div class="swiper-pagination" slot="pagination"></div>
   </swiper>
+</div>
 </template>
 
 <script>
@@ -28,6 +31,8 @@ import { Swiper, SwiperSlide } from 'vue-awesome-swiper'
 // import style (<= Swiper 5.x)
 import 'swiper/css/swiper.css';
 import PlayListItem from "./PlayListItem";
+
+let vm;
 export default {
   components: {
     PlayListItem,
@@ -47,11 +52,10 @@ export default {
 	},
   data() {
     return {
-      
       swiperOption: {  
           notNextTick: true,
           //循环
-          loop:true,
+          loop:false,
           //设定初始化时slide的索引
           initialSlide:0,
           //自动播放
@@ -66,6 +70,18 @@ export default {
           pagination: {
               el: '.swiper-pagination',
               clickable :true
+          },
+          allowTouchMove: false,
+          on:{
+            click:function(){
+              // if(e.target.nodeName === 'I'){
+              //   const id = e.target.dataset.id
+              //   vm.$emit('itemselect',id)
+              //   console.log(id);
+              // }
+              // console.log(this.clickedSlide);
+              // vm.$emit('itemselect',5038176324)
+            }
           }
       }
     }
@@ -76,8 +92,14 @@ export default {
     },
     listNext(){
       this.swiper.slideNext()
+    },
+    handleSelect(id){
+      // console.log('我执行了'+id);
+      this.$emit('itemselect',id)
     }
-    
+  },
+  created(){
+    vm = this
   }
 }
 </script>

@@ -1,7 +1,15 @@
 <template>
-    <index-block title="歌单推荐" :navlist="hotNavBar" @change="hotMusicChange">
+    <index-block 
+      title="歌单推荐" 
+      :navlist="hotNavBar" 
+      @change="hotMusicChange"              
+    >
       <div class="playlist-wrapper">
-        <play-list-swiper :listinfo="result" :iteminfo="iteminfo"></play-list-swiper>
+        <play-list-swiper 
+          :listinfo="result"
+          :iteminfo="iteminfo"
+          @itemselect="itemSelect"
+        />
       </div>
     </index-block>
 </template>
@@ -16,7 +24,8 @@ export default {
   data(){
     return{
       hotNavBar:['华语','清新','经典','网络歌曲','欧美','民谣'],
-      result: []
+      result: [],
+
     }
   },
   computed:{
@@ -38,8 +47,16 @@ export default {
         this.result = Object.freeze(list)
       })
     },
+    //切换歌单类型
     hotMusicChange(name){
       this.getplayList(name)
+    },
+    //点击歌单item得到id
+    itemSelect(id){
+      this.$router.push({
+        path: '/home/playlistdetail',
+        query: { id}
+      }).catch(err => { console.log(err) })
     }
   },
   mounted(){

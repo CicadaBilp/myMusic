@@ -1,5 +1,5 @@
 <template>
-  <div class="container" :style="style">
+  <div class="container" :style="style" :class="{'hide-bar':hidebar}">
       <slot></slot>
   </div>
 </template>
@@ -7,7 +7,8 @@
 <script>
 export default {
   props:{
-    h:String
+    h:String,
+    hidebar:Boolean
   },
   computed:{
     style(){
@@ -22,13 +23,19 @@ export default {
 <style scoped lang="scss">
 .container{
   overflow:auto ;
+  &::-webkit-scrollbar{
+    width:4px;  /*宽高可调节，如果为0，则消失*/
+    height:4px;
+  }
 }
 // /*滚动条样式*/
 // /*定义滚动条高度及背景 宽高分别对应横竖滚动条的尺寸*/
-// .container::-webkit-scrollbar{
-//   width:10px;  /*宽高可调节，如果为0，则消失*/
-//   height:10px;
-//   background-color:#eaeaea;
+.hide-bar.container{
+  overflow: hidden;
+}
+// ::-webkit-scrollbar{
+//   width:0;  /*宽高可调节，如果为0，则消失*/
+//   height:0;
 //   }
 //   /*定义滚动条轨道，内阴影+圆角*/
 // .container::-webkit-scrollbar-track{

@@ -2,17 +2,17 @@
   <div class="search-list-wrapper">
     <div class="head-search" :class="{'search-fix' : isFixed}">
       <div class="search-wrapper">
-        <input type="text" value="错位时空">
+        <input type="text" :value="keywords">
         <div class="search-btn"><i></i></div>
       </div>
-      <div class="hot-search">
+      <!-- <div class="hot-search">
         热门搜索: 
         <span>我们的歌</span>
         <span>冰雪奇缘2</span>
         <span>张杰</span>
         <span>桥边姑娘</span>
         <span>星辰大海</span>
-      </div>
+      </div> -->
     </div>
     <div class="list-info">
         <div class="info-header">
@@ -51,9 +51,12 @@
             </div>
         </div>
         <scroll h="656px">
-          <music-list :type="type" :list="list" @select="handleSelect"></music-list>
+          <music-list :type="type" :list="currentlist" @select="handleSelect"></music-list>
         </scroll>
     </div>
+    <!-- <div v-show="">
+      <no-result :keywords="keywords"></no-result>
+    </div> -->
     <div class="footer"></div>
   </div>
 </template>
@@ -62,15 +65,19 @@
 import MusicList from '../../components/common/MusicList.vue'
 import OptionBtn from '../../components/common/OptionBtn.vue'
 import Scroll from '../../components/common/Scroll.vue'
-import {mapActions} from 'vuex'
+import NoResult from '../../components/common/NoResult.vue'
+import {mapActions, mapGetters} from 'vuex'
 import {API} from '../../request/api'
+
+
+const LIMIT = 20;
+
 export default {
-  components:{ MusicList, OptionBtn,Scroll },
+  components:{ MusicList, OptionBtn,Scroll,NoResult },
   data(){
     return{
       isFixed:false,
       type:'单曲',
-      list:[],
       typelist:Object.freeze(
           [{ name:'单曲',id:1 },
            { name:'专辑',id:10 },
@@ -80,10 +87,20 @@ export default {
            { name:'歌词',id:1006 }
         ]
       ),
-      typeindex:1
+      typeindex:1,
+      songlists:[],
+      albumlists:[],
+      playlistlists:[],
+      songoffset:0,
+      albumoffset:0,
+      playlistoffset:0,
+      keywords:'',
+      flag:false
     }
   },
   computed:{
+    ...mapGetters(['playlist']),
+    //返回对应字符串
       arr(){
             switch (this.type) {
             case '单曲':
@@ -95,11 +112,24 @@ export default {
             default:
                 break;
         }
+      },
+      //当前展示哪一个数组
+      currentlist(){
+        switch (this.type) {
+            case '单曲':
+            return this.songlists;
+            case '专辑':
+            return this.albumlists;
+            case '歌单':
+            return this.playlistlists;
+            default:
+                break;
+        }
       }
   },
   methods:{
     //导入vuex中的actions设置播放列表和状态
-      ...mapActions(['selectPlay']),
+      ...mapActions(['selectPlay','insertSong']),
     //滚动条滚动处理函数
     handleScroll () {
       let scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop
@@ -110,53 +140,85 @@ export default {
         this.isFixed = false
       }
     },
+    //点击搜索结果tab
     changeType(item){
         this.typeindex = item.id
         this.type = item.name
-        this.getSearch(item.id)
+        console.log(this.type);
+        if(this.currentlist.length > 0 && !this.flag){
+          console.log();
+          return
+        }
+        this.getSearch(item.id,0,LIMIT,this.keywords)
     },
+    //处理点击列表项
      async handleSelect(item,index){
-         console.log(item);
         if(this.type == '单曲'){
             //将点击的歌曲传给vuex中的播放列表
             const id = item.id
             let songdetail = await API.getSongDetail(id)
-            this.selectPlay({
+            if(!this.playlist || this.playlist.length<=0){
+              this.selectPlay({
                 list:[songdetail.data.songs[0]],
                 index
-            })
+              })
+            }else{
+              this.insertSong(songdetail.data.songs[0])
+            }
+            
         }else if(this.type == '专辑'){
             const id = item.id
-            console.log(id);
-            let getAlbumDetail = await API.getAlbumDetail(id)
-            // console.log(albumdetail);
-            this.selectPlay({
-                list:getAlbumDetail.data.songs,
-                index
-            })
+            // console.log(id);
+            this.$router.push({
+              path: '/home/albumdetail',
+              query: { id}
+            }).catch(err => { console.log(err) })
+            
         }else if(this.type == '歌单'){
-            const id = item.id
-            let albumdetail = await API.getPlaylistDetail(id)
-            // console.log(albumdetail);
-            this.selectPlay({
-                list:albumdetail.data.playlist.tracks,
-                index
-            })
+            // const id = item.id
+            this.$router.push({
+              path: '/home/playlistdetail',
+              query: { id}
+            }).catch(err => { console.log(err) })
         }
     },
-    async getSearch(id){
+    //根据搜索词和类型获取对应搜索数据
+    async getSearch(id,offset,limit,keywords){
         const params = {
-            keywords:'赵雷',
-            limit:20,
-            type:id
+            keywords,
+            limit,
+            type:id,
+            offset
         }
         let res = await API.getSearchList(params)
-        this.list = Object.freeze(res.data.result[this.arr])
+        const reslist = Object.freeze(res.data.result[this.arr]);
+        switch (id) {
+            case 1:
+          this.songlists = reslist;
+              break;
+            case 10:
+          this.albumlists = reslist;
+              break;
+            case 1000:
+          this.playlistlists = reslist;
+              break;
+            default:
+              break;
+        }
+    }
+  },
+  watch:{
+    //监听路由变化更新关键词重新搜索
+    $route(){
+      this.keywords=this.$route.query.keywords
+      this.flag = true
+      this.getSearch(1,0,LIMIT,this.keywords)
     }
   },
   mounted(){
     window.addEventListener('scroll', this.handleScroll)
-    this.getSearch(1)
+    this.keywords = this.$route.query.keywords
+    this.getSearch(1,0,LIMIT,this.keywords)
   },
   destroyed () {
     window.removeEventListener('scroll', this.handleScroll)

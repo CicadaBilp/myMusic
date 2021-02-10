@@ -4,6 +4,7 @@
         <play-list-swiper
           :listinfo="newdisc" 
           :iteminfo="iteminfo"
+          @itemselect="itemSelect2"
         />
       </div>
     </index-block>
@@ -35,6 +36,7 @@ export default {
     }
   },
   methods:{
+    //获取新碟
     getNewDiscs(area){
         API.getNewDisc(area)
             .then((res) => {
@@ -45,6 +47,12 @@ export default {
     newDiscChange(name){
         const nameType = newDiscType(name)
         this.getNewDiscs(nameType)
+    },
+    itemSelect2(id){
+      this.$router.push({
+        path: '/home/albumdetail',
+        query: { id}
+      }).catch(err => { console.log(err) })
     }
   },
   mounted(){

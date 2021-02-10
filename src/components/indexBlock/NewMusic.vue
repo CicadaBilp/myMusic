@@ -1,7 +1,11 @@
 <template>
     <index-block title="新歌首发" :navlist="newNavbar" @change="newMusicChange">
       <div class="newmusic-wrapper">
-        <play-list-swiper :iteminfo="iteminfo" :listinfo="newmusic"></play-list-swiper>
+        <play-list-swiper 
+          :iteminfo="iteminfo" 
+          :listinfo="newmusic"
+          @itemselect="itemSelect"
+        />
       </div>
     </index-block>
 </template>
@@ -12,7 +16,10 @@ import PlayListSwiper from '../common/PlayListSwiper'
 import {API} from '@/request/api.js'
 import {arrChange} from '@/utils/utils.js'
 import {newSongType} from '@/utils'
+import {playSong} from '../../utils/mixin'
+
 export default {
+  mixins:[playSong],
   components: { IndexBlock ,PlayListSwiper},
   data(){
     return {
@@ -43,6 +50,12 @@ export default {
     newMusicChange(name){
         const nameType = newSongType(name)
         this.getNewSongs(nameType)
+    },
+    //点击新歌首发中的歌曲,跳转播放
+    itemSelect(id){
+      API.getSongDetail(id).then((res) => {
+        this.select(res.data.songs[0])
+      })
     }
   },
   mounted(){

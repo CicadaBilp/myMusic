@@ -1,20 +1,20 @@
 <template>
-  <div class="list-item-wrapper"  :style="itemWrapper">
+  <div class="list-item-wrapper"  :style="itemWrapper" >
     <div class="list-item" :class="className">
       <div class="item-img" :style="itemImg" >
-        <img :src="imgsrc" alt="" />
+        <img v-lazy="imgsrc" alt="" />
         <i class="mask"></i>
-        <i class="play-icon"></i>
+        <i class="play-icon"  @click="handleSelect()"></i>
       </div>
       <div class="item-info" v-if="config.type !== 'wonderHot'">
-        <div>
+        <div class="title-wrapper">
           <div class="title">{{title}}</div>
           <div class="singer" v-if="config.type !== 'hotMusic'">{{singer}}</div>
         </div>
         <div class="play-info" v-if="config.type !== 'newDisc'">
           <span>{{config.type=='hotMusic' ? '播放量: ' :''}}</span>
           <i></i>
-          <span>{{config.type=='newSong' ? items.duration : items.playCount   }}</span>
+          <span>{{config.type=='newSong' ? formatPlayTime(items.duration) : playCount   }}</span>
         </div>
       </div>
     </div>
@@ -22,7 +22,10 @@
 </template>
 
 <script>
+import {tranNumber} from '../../utils/utils'
+import {timeMixin} from '../../utils/mixin'
 export default {
+  mixins:[timeMixin],
   props: {
     items: Object,
     config:Object
@@ -71,6 +74,14 @@ export default {
       }else{
         return this.items.artists[0].name 
       }    
+    },
+    playCount(){
+      return tranNumber(this.items.playCount,2)
+    }
+  },
+  methods:{
+    handleSelect(){
+      this.$emit('itemselect',this.items.id)
     }
   }
 };
@@ -122,6 +133,7 @@ export default {
         position: absolute;
         top: 50%;
         left: 50%;
+        z-index: 100;
         margin: -35px;
         opacity: 0;
         transform: scale(.7);
@@ -131,9 +143,7 @@ export default {
     .item-info{
       color: #999;
       .title{
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis
+        @include ellipsis;
       }
     }
     &.vertical{
@@ -148,10 +158,12 @@ export default {
         .title {
           line-height: 22px;
           color: #000;
+          @include ellipsis;
         }
         .singer{
           color: #999;
           line-height: 22px;
+          ;
         }
         .play-info {
           line-height: 22px;
@@ -167,18 +179,25 @@ export default {
       }
       .item-info{
         flex: 1;
-        width: 100%;
+        // width: 100%;
         font-size: 14px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        .title {
-          line-height: 22px;
-          color: #000;
-          margin-bottom: 5px;
-
+        overflow: hidden;
+        text-overflow: ellipsis;
+        .title-wrapper{
+          width: 70%;
+          .title {
+            width: 100%;
+            line-height: 22px;
+            color: #000;
+            margin-bottom: 5px;
+            @include ellipsis;
+          }
         }
         .play-info {
+          width: 43px;
           line-height: 22px;
         }
       }

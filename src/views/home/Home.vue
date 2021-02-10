@@ -9,11 +9,14 @@
         /></a>
       </h1>
       <ul class="nav-list">
-        <li v-for="(item, index) in navList" :key="index">{{ item.name }}</li>
+        <li v-for="(item, index) in navList" 
+            :key="index"
+            :class="{'active':index === currentindex}"
+            @click="selectTab(item,index)"
+        >{{ item.name }}</li>
       </ul>
-      <div class="search">
-        <input type="text" class="input" placeholder="搜索音乐,MV,歌单,用户" />
-        <i></i>
+      <div class="search-wrapper">
+        <search-box></search-box>
       </div>
       <div class="head-opt">
         <div class="login">
@@ -43,7 +46,9 @@
 </template>
 
 <script>
+import SearchBox from '../../components/common/SearchBox'
 export default {
+  components:{SearchBox},
   data() {
     return {
       navList: [
@@ -53,15 +58,22 @@ export default {
         { name:'开放平台', path:'/home/open' },
         { name:'VIP', path:'/home/vip' },
       ],
+      currentindex:0
     };
   },
+  methods:{
+    selectTab(item,index){
+      this.$router.push(item.path)
+      this.currentindex = index
+    }
+  }
 };
 </script>
 
 <style scoped lang="scss">
 @import "assets/css/global.scss";
 .home{
-  height: 1600px;
+  // height: 1600px;
 }
 .home-nav-bar {
   height: 90px;
@@ -101,25 +113,16 @@ export default {
       }
     }
   }
-  .search {
+  .search-wrapper{
     height: 36px;
-    line-height: 36px;
+    width: 220px;
     margin-top: 26px;
     position: absolute;
+    z-index: 100;
     top: 0;
     right: 284px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    padding: 0 33px 0 11px;
-    input {
-      width: 174px;
-      border: none;
-      padding: 0 0;
-      outline: none;
-      height: 30px;
-      transition: all 0.5s;
-    }
   }
+
   .head-opt {
     height: 90px;
     position: absolute;

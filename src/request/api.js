@@ -59,8 +59,20 @@ export const API = {
   getMusicAble(id){
     return get('/check/music',{id})
   },
+  //获取歌曲歌词
   getLyric(id){
     return get('/lyric',{id})
+  },
+  //获取热搜列表
+  getHotSearchList(){
+    return get('/search/hot/detail')
+  },
+  //传入搜索关键词获取搜索建议
+  getSearchSuggest(keywords){
+    return get('/search/suggest',{keywords})
+  },
+  getSimilarPlaylist(id){
+    return get('/related/playlist',{id})
   }
 }
 

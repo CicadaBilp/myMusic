@@ -4,13 +4,13 @@
       <transition name="normal">
         <div class="normal-play" v-show="fullScreen">
           <div class="play-music-header">
-            <h1 @click="hideMax"></h1>
+            <h1 @click="hideMax">返 回</h1>
             <div class="header-info">
               <span>千万干品质曲库尽享, 只等你来</span>
-              <div class="download">
+              <!-- <div class="download">
                 <i></i>
                 <span>客户端下载</span>
-              </div>
+              </div> -->
               <span>登录</span>
               <span>设置</span>
             </div>
@@ -60,29 +60,46 @@
                     type="播放" 
                     :list="sequenceList" 
                     @select="handleSelect"
+                    :currentsongid="currentSong.id"
+                    :playstatus="playing"
                   />
                 </scroll>
               </div>
             </div>
             <div class="music-info">
               <div class="base-info">
-                <div class="base-img">
+                <div class="base-img" :class="{'no-loaded':!currentSong}">
                   <img :src="baseimg" alt="" ref="baseimg">
                 </div>
                 <div class="song-name" v-if="currentSong.id">歌曲名: {{currentSong.name}}</div>
                 <div class="singer-name" v-if="currentSong.id">歌手名: {{singername}}</div>
                 <div class="album-name" v-if="currentSong.id">专辑名: {{currentSong.al.name}}</div>
               </div>
-              <div class="lyric-info">
-                <div class="lyric-box">
-                  <div class="lyric-info-inner"></div>
-                </div>
+              <div class="lyric-info" >
+                <scroll h="160px" :hidebar="true" ref="scrollcontainer">
+                  <div v-if="currentLyric" ref="lyricList" class="lyric-wrapper">
+                    <p ref="lyricLine"
+                       class="line-text"
+                       :class="{'current':index===currentLineNum}"
+                       v-for="(line,index) in currentLyric.lines"
+                       :key="index"
+                    >
+                      {{line.txt}}
+                    </p>
+                  </div>
+                </scroll>
               </div>
             </div>
           </div>
         </div>
       </transition>
-      <div class="mini-play">
+      <div class="mini-play" 
+           :class="{'mining-active':!fullScreen}"
+           @mouseover="mouseOver"
+           @mouseleave="mouseLeave"
+           ref="miniplay"
+      >
+
         <div class="mini-play-inner">
           <div class="mini-img" v-show="!fullScreen" @click="showMax">
             <img :src="baseimg" alt="">
@@ -99,8 +116,8 @@
               <span>{{formatCurrentTime(currentTime)}} / {{totaltime}}</span>
             </div>
             <play-progress 
-              :percent="percent"
-              @changeprogress="changeprogress"
+              :percent="songpercent"
+              @changeprogress="songchangeprogress"
             />
           </div>
           <span class="play-mode" 
@@ -111,8 +128,10 @@
           <span class="comment"></span>
           <div class="volume">
             <span class="volume-icon"></span>
-            <div class="volume-progress">
-            </div>
+            <play-progress 
+              :percent="currentVolume"
+              @changeprogress="volumechangeprogress"
+            />
           </div>
         </div>
       </div>
@@ -140,7 +159,8 @@ import { mapGetters,mapMutations } from "vuex";
 import {API} from '../../request/api'
 import {timeMixin} from '../../utils/mixin'
 import {playMode} from '../../utils/play'
-import {shuffle} from '../../utils/utils.js'
+import {shuffle,findIndex} from '../../utils/utils.js'
+const Lyric = require('../../utils/lyric-parser')
 
 export default {
   mixins:[timeMixin],
@@ -148,7 +168,10 @@ export default {
   data(){
     return {
       songReady:false,
-      currentTime:0
+      currentTime:0,
+      currentLyric:null,
+      currentLineNum:0,
+      currentVolume:0
     }
   },
   computed: {
@@ -166,15 +189,19 @@ export default {
       if(this.currentSong.id){
         return `https://music.163.com/song/media/outer/url?id=${this.currentSong.id}.mp3`
       }
+      return ''
       
     },
+    //背景mask图片地址
     bgplay(){
       if(this.currentSong.al){
         return {
           backgroundImage:`url('${this.currentSong.al.picUrl}')`
         }
       }
+      return ''
     },
+    //歌曲信息图片
     baseimg(){
       if(this.currentSong.al){
         return this.currentSong.al.picUrl
@@ -187,6 +214,7 @@ export default {
       })
       return singers.slice(0,-2)
     },
+    //播放模式图标类
     modeplay(){
       return this.mode === playMode.sequence ? 'sequence' :this.mode === playMode.loop ? 'loop' :'random'
     },
@@ -194,7 +222,8 @@ export default {
     totaltime(){
       return this.formatPlayTime(this.currentSong.dt)
     },
-    percent(){
+    //当前播放进度的百分比
+    songpercent(){
       return Math.floor(this.currentTime) / (Math.floor(this.currentSong.dt/1000))
     }
   },
@@ -208,12 +237,17 @@ export default {
     }),
     //点击播放列表中的播放按钮
     handleSelect(item,index){
-      //点击播放的歌曲设置给currentsong
-      this.setCurrentIndex(index)
-      this.setPlayStatus(true)
-      API.getLyric(item.id).then((res) => {
-        console.log(res.data.lrc.lyric);
-      })
+      if(item.id===this.currentSong.id){
+        this.togglePlaying()
+        return 
+      }
+      //随机模式下
+      if(this.mode == playMode.random){
+        const ind = findIndex(this.playlist,item)
+        this.setCurrentIndex(ind)
+      }else{
+        this.setCurrentIndex(index)
+      }     
     },
     //隐藏全屏
     hideMax(){
@@ -229,38 +263,50 @@ export default {
         return
       }
       this.setPlayStatus(!this.playing)
+      this.currentLyric && this.currentLyric.togglePlay()
     },
     nextMusic(){
+      //需要先判断ready状态,为true再进行
       if(!this.songReady){
         return
       }
-      let index = this.currentIndex + 1
-      if(index === this.playlist.length){
-        index = 0
-      }
-      this.setCurrentIndex(index)
-      if(!this.playing){
-        this.setPlayStatus(true)
-      }
+      if(this.playlist.length===1){
+        this.loop()
+      }else{
+        let index = this.currentIndex + 1
+        if(index === this.playlist.length){
+          index = 0
+        }
+        this.setCurrentIndex(index)
+        if(!this.playing){
+          this.setPlayStatus(true)
+        }
+      }     
       this.songReady = false
     },
     preMusic(){
       if(!this.songReady){
         return
       }
-      let index = this.currentIndex - 1
-      if(index == -1){
-        index = this.playlist.length - 1
+      if(this.playlist.length===1){
+        this.loop()
+      }else{
+        let index = this.currentIndex - 1
+        if(index == -1){
+          index = this.playlist.length - 1
+        }
+        this.setCurrentIndex(index)
+        if(!this.playing){
+          this.setPlayStatus(true)
+        }
       }
-      this.setCurrentIndex(index)
-      if(!this.playing){
-        this.setPlayStatus(true)
-      }
+      
       this.songReady = false
     },
     //audio的准备时的钩子函数(准备好时会调用将songReady更改为true)
     ready(){
       this.songReady = true
+      this.currentVolume = this.$refs.audio.volume
     },
     //当audio加载src失败时执行(在这首歌失败的情况下也将songReady更改为true)
     error(){
@@ -268,12 +314,23 @@ export default {
     },
     //播放的钩子函数,更新currenttime
     updateTime(e){
+      // console.log(e.target.currentTimesss);
       this.currentTime = e.target.currentTime
     },
     //点击进度条后,接收到位置百分比设置给当前播放时间
-    changeprogress(pre){
-      this.$refs.audio.currentTime = pre  * Math.floor(this.currentSong.dt/1000)   
+    songchangeprogress(pre){
+      const newCurrentTime = pre  * Math.floor(this.currentSong.dt/1000)  
+      this.$refs.audio.currentTime =  newCurrentTime
+      if(this.currentLyric){
+        this.currentLyric.seek(newCurrentTime*1000)
+      }
     },
+    //音量条点击改变的处理(接收百分比)
+    volumechangeprogress(pre){
+      this.$refs.audio.volume = pre
+      this.currentVolume = pre
+    },
+    //重置当前歌曲在列表的索引
     resetCurrentIndex(list){
       let index = list.findIndex((item) => {
         return item.id === this.currentSong.id
@@ -285,24 +342,60 @@ export default {
       let newmode = (this.mode + 1) % 3
       this.setPlayMode(newmode)
       let list = null
-      if(newmode = playMode.random){
-        list = shuffle(this.sequenceList)
+      if(newmode == playMode.random){
+        let ordlist = this.sequenceList.slice()
+        list = shuffle(ordlist)
       }else{
         list = this.sequenceList
       }
       this.resetCurrentIndex(list)
-      this.setPlayList(list )
+      this.setPlayList(list)
     },
+    //循环模式
     loop(){
       this.$refs.audio.currentTime = 0
       this.$refs.audio.play()
+      if(this.currentLyric){
+        this.currentLyric.seek(0)
+      }
     },
+    //歌曲播放完毕处理
     endplay(){
       if(this.mode === playMode.loop){
         this.loop()
       }else{
         this.nextMusic()
       }
+    },
+    //
+    changeNum({lineNum,txt}){
+      this.currentLineNum = lineNum
+        let len = this.$refs.lyricLine[lineNum].offsetTop-75
+        this.$refs.lyricList.style.transform = `translate3d(0,${-len}px,0)`
+    },
+    //请求歌词初始化
+    handleLyric(){
+      API.getLyric(this.currentSong.id).then((res) =>{
+        const ret = res.data.lrc.lyric
+        // console.log(res);
+        const myLyric = new Lyric(ret,this.changeNum)
+        this.currentLyric = myLyric
+        if(this.playing){
+          this.currentLyric.play(this.currentTime)
+        }
+      })
+    },
+    mouseOver(){
+      if(this.fullScreen){
+        return 
+      }
+      this.$refs.miniplay.style.transform = 'translate3d(0,0,0)'
+    },
+    mouseLeave(){
+      if(this.fullScreen){
+        return 
+      }
+      this.$refs.miniplay.style.transform = 'translate3d(0,70px,0)'
     }
   },
   watch:{
@@ -310,8 +403,13 @@ export default {
       if(newsong.id === oldsong.id){
         return 
       }
+      if(this.currentLyric){
+        this.currentLyric.stop()
+      }
       this.$nextTick(() => {
          this.$refs.audio.play()
+         this.setPlayStatus(true)
+         this.handleLyric()
       })   
     },
     //监听playing值的变化
@@ -321,17 +419,12 @@ export default {
         newPlaying ? audio.play() : audio.pause()
       })
     }
-    //261329
-  },
-  mounted() {
   }
 }
 </script>
 
 <style scoped lang="scss">
 @import "assets/css/global.scss";
-
-
 
 .play-music-wrapper {
   width: 100%;
@@ -343,12 +436,9 @@ export default {
   background-color: rgb(224, 224, 224);
   overflow: hidden;
   &.show-mini-play{
-    // height: 80px;
-    // left: 0;
     top: auto;
   }
   .normal-play{
-    // min-width: 1072px;
     position: absolute;
     top: 0;
     left: 0;
@@ -360,10 +450,16 @@ export default {
     display: flex;
     justify-content: space-between;
     h1 {
-      width: 48px;
-      height: 48px;
-      background: url("../../assets/image/icon_sprite.png");
-      background-position: -191px -593px;
+      width: 60px;
+      height: 30px;
+      color: #fff;
+      text-align: center;
+      line-height: 30px;
+      border-radius: 12px;
+      &:hover{
+        background-color: #31c27c;
+        cursor: pointer;
+      }
     }
     .header-info {
       @include centers;
@@ -411,18 +507,29 @@ export default {
         width: 340px;
         height: 100%;
         text-align: center;
-        font-size: 14px;
         line-height: 24px;
         // background-color: #31c27c;
         color:  rgba(225,225,225,.8);
         .base-info{
+          font-size: 14px;
           height: 285px;
-          margin-bottom: 30px;
+          margin-bottom: 50px;
           @include columnCenter;
           .base-img{
             width: 186px;
             height: 186px;
             position: relative;
+            &.no-loaded::before{
+              content: "";
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              height: 100%;
+              background: url('../../assets/image/player_cover.png');
+              background-repeat: no-repeat;
+              background-size: 100% 100%;
+            }
             &::after{
               content: "";
               position: absolute;
@@ -451,13 +558,20 @@ export default {
           }
         }
         .lyric-info{
-          height: 200px;
-          .lyric-box{
-            overflow: hidden;
-            .lyric-info-inner{
-
+          height: 170px;
+          mask-image: linear-gradient(to bottom,rgba(255,255,255,0) 0,rgba(255,255,255,.6) 15%,rgba(255,255,255,1) 25%,rgba(255,255,255,1) 75%,rgba(255,255,255,.6) 85%,rgba(255,255,255,0) 100%);
+          .lyric-wrapper{
+            position: relative;
+            transition: all .5s;
+            .line-text{
+              font-size: 14px;
+              line-height: 32px;
+              &.current{
+                color: #31c27c;
+              }
             }
           }
+            
         }
       }
   }
@@ -471,8 +585,16 @@ export default {
     z-index: 150;
     left: 0;
     bottom: 0;
-    // border: 1px solid red;
-    background-color: rgba(0,0,0,.6);
+    transition: transform .6s;
+    &.mining-active{
+      background-color: rgba(0,0,0,.35);
+      opacity: .7;
+      transform: translate3d(0,70px,0);
+      z-index: -1;
+      .mini-play-inner{
+        z-index: 3;
+      }
+    }
     .mini-play-inner{
       height: 100%;
       min-width: 1080px;
@@ -485,7 +607,7 @@ export default {
         z-index: 150;
         left: -80px;
         top: 10px;
-        background-color: aquamarine;
+        // background-color: aquamarine;
         img{
           width: 100%;
           height: 100%;

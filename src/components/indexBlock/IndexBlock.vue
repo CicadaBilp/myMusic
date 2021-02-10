@@ -18,8 +18,8 @@
       <div class="btn-right" :style="{top:btntop + 'px'}" v-if="btntop">更多</div>
       <slot></slot>
     </div>
-    <div class="left toggle" @click="pre()">左</div>
-    <div class="right toggle" @click="next()">右</div>
+    <div class="left toggle" @click="pre()"></div>
+    <div class="right toggle" @click="next()"></div>
   </div>
 </template>
 
@@ -135,20 +135,40 @@ export default {
     z-index: 10;
     top: 50%;
     background: rgba(0, 0, 0, 0.05);
-    // background-color: brown;
     line-height: 108px;
     text-align: center;
     transition: all 0.5s;
+    &::after{
+      content: "";
+      width: 20px;
+      height: 39px;
+      position: absolute;
+      z-index: 20;
+      top: 0;
+      left:0;
+      bottom: 0;
+      right: 0;
+      margin: auto;
+
+      background: url('../../assets/image/icon_sprite.png');  
+      background-size: 200px 340px;   
+    }
     &:hover {
       cursor: pointer;
     }
     &.left {
       left: 0;
       transform: translateX(-100%);
+      &::after{
+        background-position: -20px -120px;
+      }
     }
     &.right {
       right: 0;
       transform: translateX(100%);
+      &::after{
+        background-position: 0 -120px;
+      }
     }
   }
 }
